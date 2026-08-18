@@ -65,7 +65,13 @@ export function ThreadView({ contact, conversationId, messages, loading, error, 
 
         {!loading &&
           !error &&
-          messages.map((m) => (
+          [...messages]
+            .sort((a, b) => {
+              const da = a.dateAdded ? new Date(a.dateAdded).getTime() : 0;
+              const db = b.dateAdded ? new Date(b.dateAdded).getTime() : 0;
+              return da - db;
+            })
+            .map((m) => (
             <div key={m.id} className={`bubble bubble-${m.direction === 'outbound' ? 'out' : 'in'}`}>
               {m.subject && <div className="bubble-subject">{m.subject}</div>}
               <div className="bubble-body" dangerouslySetInnerHTML={{ __html: m.html }} />

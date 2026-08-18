@@ -484,6 +484,7 @@
 .thread-messages {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 18px 16px;
   display: flex;
   flex-direction: column;
@@ -527,6 +528,10 @@
   font-size: 0.78rem;
   margin-bottom: 4px;
   opacity: 0.85;
+}
+.bubble-body {
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 .bubble-body :where(p) {
   margin: 0 0 6px;
