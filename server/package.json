@@ -1,3 +1,26 @@
 {
-  "type": "commonjs"
+  "name": "react",
+  "private": true,
+  "version": "0.0.0",
+  "type": "commonjs",
+  "scripts": {
+   
+    "dev:api": "nodemon index.js",
+    "server": "node index.js",
+    "build": "npm run build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1"
+  },
+  "devDependencies": {
+   
+    "@vitejs/plugin-react": "^3.0.0",
+    "concurrently": "^10.0.5",
+    "nodemon": "^3.1.14"
+ 
+  }
 }

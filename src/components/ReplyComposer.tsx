@@ -59,14 +59,7 @@ export function ReplyComposer({ contact, conversationId, onSent }: Props) {
           {error}
         </div>
       )}
-      <input
-        type="text"
-        className="input composer-subject"
-        placeholder="Subject (optional)"
-        value={subject}
-        onChange={(e) => setSubject(e.target.value)}
-        disabled={sending}
-      />
+ 
       <textarea
         className={bodyError ? 'input textarea input-error' : 'input textarea'}
         placeholder={`Reply to ${contact.name}…`}
