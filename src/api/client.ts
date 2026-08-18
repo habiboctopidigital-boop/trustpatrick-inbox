@@ -17,7 +17,7 @@ export const AUTH_EVENT = 'pr:unauthorized';
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`https://trustpatrick-inbox-production.up.railway.app/api${path}`, {
+    res = await fetch(`${import.meta.env.VITE_API_URL}/api${path}`, {
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       ...init,
@@ -54,6 +54,11 @@ export const api = {
 
   getContacts: () => request<{ contacts: import('../types').Contact[] }>('/contacts'),
 
+  getContact: (contactId: string) =>
+    request<{ contact: import('../types').ContactDetail }>(
+      `/contacts/${encodeURIComponent(contactId)}`
+    ),
+
   getConversations: (contactId: string) =>
     request<{ conversations: import('../types').Conversation[] }>(
       `/conversations?contactId=${encodeURIComponent(contactId)}`
@@ -64,9 +69,10 @@ export const api = {
       `/conversations/${encodeURIComponent(conversationId)}/messages`
     ),
 
+  // Replies go out as SMS — plain text, no subject.
   sendReply: (
     conversationId: string,
-    payload: { contactId: string; subject?: string; html: string; emailTo?: string; emailFrom?: string }
+    payload: { contactId: string; message: string; toNumber?: string; fromNumber?: string }
   ) =>
     request<{ result: unknown }>(`/conversations/${encodeURIComponent(conversationId)}/reply`, {
       method: 'POST',

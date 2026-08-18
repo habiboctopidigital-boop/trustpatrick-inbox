@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import type { Contact, ConversationMessage } from '../types';
 import { avatarColor, initials } from '../utils/avatarColor';
+import { useContactDetail } from '../hooks/useContactDetail';
+import { ContactInfoPanel } from './ContactInfoPanel';
 import { ReplyComposer } from './ReplyComposer';
 
 interface Props {
@@ -13,6 +16,11 @@ interface Props {
 }
 
 export function ThreadView({ contact, conversationId, messages, loading, error, onRetry, onBack }: Props) {
+  const [infoOpen, setInfoOpen] = useState(false);
+  const { detail, loading: detailLoading, error: detailError, reload: reloadDetail } = useContactDetail(
+    contact?.id ?? null
+  );
+
   if (!contact) {
     return (
       <div className="thread-empty">
@@ -21,6 +29,11 @@ export function ThreadView({ contact, conversationId, messages, loading, error, 
       </div>
     );
   }
+
+  // The contact list comes from GHL's search endpoint, which often omits the
+  // phone — prefer the full record once it arrives.
+  const phone = detail?.phone || contact.phone || null;
+  const email = detail?.email || contact.email || null;
 
   return (
     <div className="thread">
@@ -33,8 +46,14 @@ export function ThreadView({ contact, conversationId, messages, loading, error, 
         </span>
         <div className="thread-header-body">
           <span className="thread-header-name">{contact.name}</span>
-          <span className="thread-header-sub">{contact.email || contact.phone || ''}</span>
+          {email && <span className="thread-header-sub">{email}</span>}
+          <span className="thread-header-phone">
+            {phone || (detailLoading ? 'Loading number…' : 'No phone number')}
+          </span>
         </div>
+        <button className="btn btn-secondary thread-info-btn" onClick={() => setInfoOpen(true)}>
+          View info
+        </button>
       </div>
 
       <div className="thread-messages">
@@ -59,7 +78,7 @@ export function ThreadView({ contact, conversationId, messages, loading, error, 
         {!loading && !error && messages.length === 0 && (
           <div className="pane-message">
             <span className="pane-message-icon">📨</span>
-            <p>No messages in this conversation yet.</p>
+            <p>No SMS messages in this conversation yet.</p>
           </div>
         )}
 
@@ -72,16 +91,26 @@ export function ThreadView({ contact, conversationId, messages, loading, error, 
               return da - db;
             })
             .map((m) => (
-            <div key={m.id} className={`bubble bubble-${m.direction === 'outbound' ? 'out' : 'in'}`}>
-              {m.subject && <div className="bubble-subject">{m.subject}</div>}
-              <div className="bubble-body" dangerouslySetInnerHTML={{ __html: m.html }} />
-              {m.dateAdded && <div className="bubble-time">{formatDate(m.dateAdded)}</div>}
-            </div>
-          ))}
+              <div key={m.id} className={`bubble bubble-${m.direction === 'outbound' ? 'out' : 'in'}`}>
+                <div className="bubble-body bubble-body-text">{m.text}</div>
+                {m.dateAdded && <div className="bubble-time">{formatDate(m.dateAdded)}</div>}
+              </div>
+            ))}
       </div>
 
       {!loading && !error && conversationId && (
-        <ReplyComposer contact={contact} conversationId={conversationId} onSent={onRetry} />
+        <ReplyComposer contact={contact} conversationId={conversationId} phone={phone} onSent={onRetry} />
+      )}
+
+      {infoOpen && (
+        <ContactInfoPanel
+          contact={contact}
+          detail={detail}
+          loading={detailLoading}
+          error={detailError}
+          onRetry={reloadDetail}
+          onClose={() => setInfoOpen(false)}
+        />
       )}
     </div>
   );

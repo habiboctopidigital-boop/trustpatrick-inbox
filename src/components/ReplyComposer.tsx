@@ -7,12 +7,13 @@ import { useToast } from './Toast';
 interface Props {
   contact: Contact;
   conversationId: string;
+  /** Resolved phone — the full contact record when loaded, else the list value. */
+  phone: string | null;
   onSent: () => void;
 }
 
-export function ReplyComposer({ contact, conversationId, onSent }: Props) {
+export function ReplyComposer({ contact, conversationId, phone, onSent }: Props) {
   const toast = useToast();
-  const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [bodyError, setBodyError] = useState<string | null>(null);
@@ -28,8 +29,8 @@ export function ReplyComposer({ contact, conversationId, onSent }: Props) {
     }
     setBodyError(null);
 
-    if (!contact.email) {
-      setError('This contact has no email address on file.');
+    if (!phone) {
+      setError('This contact has no phone number on file.');
       return;
     }
 
@@ -37,16 +38,14 @@ export function ReplyComposer({ contact, conversationId, onSent }: Props) {
     try {
       await api.sendReply(conversationId, {
         contactId: contact.id,
-        subject: subject.trim() || undefined,
-        html: `<p>${escapeHtml(body.trim()).replace(/\n/g, '</p><p>')}</p>`,
-        emailTo: contact.email,
+        message: body.trim(),
+        toNumber: phone,
       });
-      setSubject('');
       setBody('');
-      toast.show('Reply sent.', 'success');
+      toast.show('SMS sent.', 'success');
       onSent();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to send reply. Try again.');
+      setError(err instanceof Error ? err.message : 'Failed to send SMS. Try again.');
     } finally {
       setSending(false);
     }
@@ -59,10 +58,10 @@ export function ReplyComposer({ contact, conversationId, onSent }: Props) {
           {error}
         </div>
       )}
- 
+
       <textarea
         className={bodyError ? 'input textarea input-error' : 'input textarea'}
-        placeholder={`Reply to ${contact.name}…`}
+        placeholder={`Text ${contact.name}…`}
         value={body}
         onChange={(e) => {
           setBody(e.target.value);
@@ -73,24 +72,17 @@ export function ReplyComposer({ contact, conversationId, onSent }: Props) {
       />
       {bodyError && <span className="field-error">{bodyError}</span>}
       <div className="composer-actions">
-        <span className="composer-to">To: {contact.email || 'no email on file'}</span>
-        <button type="submit" className="btn btn-primary" disabled={sending}>
+        <span className="composer-to">To: {phone || 'no phone number on file'}</span>
+        <button type="submit" className="btn btn-primary" disabled={sending || !phone}>
           {sending ? (
             <>
               <Spinner /> Sending…
             </>
           ) : (
-            'Send reply'
+            'Send SMS'
           )}
         </button>
       </div>
     </form>
   );
-}
-
-function escapeHtml(str: string) {
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
 }

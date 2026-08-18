@@ -66,7 +66,8 @@ export function ContactList({ contacts, loading, error, selectedId, onSelect, on
             </span>
             <span className="contact-item-body">
               <span className="contact-item-name">{c.name}</span>
-              <span className="contact-item-sub">{c.email || c.phone || 'No contact info'}</span>
+              <span className="contact-item-sub">{c.email || 'No email'}</span>
+              <span className="contact-item-phone">{c.phone || 'No phone number'}</span>
             </span>
           </button>
         </li>

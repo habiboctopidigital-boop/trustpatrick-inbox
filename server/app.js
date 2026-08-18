@@ -33,7 +33,7 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
 
 app.use(
   cors({
-    origin: ["https://trustpatrick-inbox.vercel.app","http://localhost:5173"],
+    origin: ["https://trustpatrick-inbox.vercel.app","http://localhost:5174"],
     credentials: true,
   })
 );
@@ -117,6 +117,13 @@ app.get('/api/contacts', requireSettings, asyncHandler(async (req, res) => {
   res.json({ contacts });
 }));
 
+// Full record for one contact — backs the "View info" panel in the thread
+// header, and fills in fields (phone especially) the search result omits.
+app.get('/api/contacts/:id', requireSettings, asyncHandler(async (req, res) => {
+  const contact = await ghl.getContact(req.ghl.token, req.params.id);
+  res.json({ contact });
+}));
+
 // ---- Conversations -------------------------------------------------------
 
 // Find (or create) the conversation for a contact, then return it.
@@ -152,22 +159,21 @@ app.get('/api/conversations/:id/messages', requireSettings, asyncHandler(async (
   res.json({ messages });
 }));
 
-// ---- Reply (send email) -------------------------------------------------
+// ---- Reply (send SMS) ---------------------------------------------------
 
 app.post('/api/conversations/:id/reply', requireSettings, asyncHandler(async (req, res) => {
-  const { contactId, subject, html, emailTo, emailFrom } = req.body || {};
-  if (!contactId || !html) {
-    return res.status(400).json({ error: 'contactId and html body are required.' });
+  const { contactId, message, toNumber, fromNumber } = req.body || {};
+  if (!contactId || !message || !String(message).trim()) {
+    return res.status(400).json({ error: 'contactId and a message body are required.' });
   }
 
-  const result = await ghl.sendEmailReply(req.ghl.token, {
+  const result = await ghl.sendSmsReply(req.ghl.token, {
     locationId: req.ghl.locationId,
     conversationId: req.params.id,
     contactId,
-    subject,
-    html,
-    emailTo,
-    emailFrom,
+    message: String(message).trim(),
+    toNumber,
+    fromNumber,
   });
 
   res.json({ result });
