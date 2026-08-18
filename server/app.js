@@ -13,9 +13,32 @@ const auth = require('./auth');
 
 const app = express();
 
+// Railway (like most PaaS) terminates TLS at a proxy in front of the app and
+// forwards plain HTTP internally. Trusting the proxy makes req.protocol/IP
+// and the secure-cookie logic below see the real (https) request.
+app.set('trust proxy', 1);
+
+// Plain root route so hitting the bare Railway URL (or a healthcheck pointed
+// at "/") gets a 200 instead of a 404.
+app.get('/', (req, res) => res.json({ ok: true, service: 'positive-replies-server' }));
+
+// ALLOWED_ORIGINS restricts which frontends may call this API with
+// credentials (cookies). Comma-separated list, e.g.
+// "https://myapp.vercel.app,https://myapp.com". If unset, any origin is
+// reflected back (fine for local dev; set it once you deploy the frontend).
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: (origin, cb) => cb(null, origin || true),
+    origin: (origin, cb) => {
+      if (!allowedOrigins.length || !origin || allowedOrigins.includes(origin)) {
+        return cb(null, origin || true);
+      }
+      return cb(new Error('Not allowed by CORS'));
+    },
     credentials: true,
   })
 );
@@ -56,6 +79,10 @@ app.get('/api/auth/me', (req, res) => {
   if (!session) return res.status(401).json({ error: 'Not signed in.' });
   res.json({ email: session.email, expiresAt: session.exp });
 });
+
+// Health check — public, no auth. Used by Railway (and load balancers in
+// general) to know the process is up; must never require a session cookie.
+app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 // Everything below requires a valid session.
 app.use('/api', (req, res, next) => {
@@ -152,8 +179,6 @@ app.post('/api/conversations/:id/reply', requireSettings, asyncHandler(async (re
 }));
 
 // ---- Errors ---------------------------------------------------------------
-
-app.get('/api/health', (req, res) => res.json({ ok: true }));
 
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Not found' });

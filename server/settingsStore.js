@@ -1,9 +1,11 @@
 // Single-tenant GHL settings storage.
 //
-// Production/Vercel: set GHL_LOCATION_ID + GHL_PRIVATE_TOKEN as environment
-// variables in the project settings. Vercel serverless functions have no
-// persistent disk, so anything written to a file would vanish on the next
-// cold start — env vars are the reliable source there, and settings become
+// Production (Railway, Vercel, or any host): set GHL_LOCATION_ID +
+// GHL_PRIVATE_TOKEN as environment variables in the project settings. Both
+// Vercel serverless functions and Railway's container filesystem are
+// ephemeral (Railway's disk resets on every redeploy/restart unless a
+// volume is attached), so anything written to a file is not durable — env
+// vars are the reliable source in production, and settings become
 // read-only ("configured via environment") in that mode.
 //
 // Local dev (no env vars set): falls back to a JSON file in the OS temp
