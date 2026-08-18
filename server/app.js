@@ -33,12 +33,7 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS || '')
 
 app.use(
   cors({
-    origin: (origin, cb) => {
-      if (!allowedOrigins.length || !origin || allowedOrigins.includes(origin)) {
-        return cb(null, origin || true);
-      }
-      return cb(new Error('Not allowed by CORS'));
-    },
+    origin: ["https://trustpatrick-inbox.vercel.app"],
     credentials: true,
   })
 );
