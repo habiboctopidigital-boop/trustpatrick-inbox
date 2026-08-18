@@ -17,7 +17,7 @@ export const AUTH_EVENT = 'pr:unauthorized';
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(`${import.meta.env.VITE_API_URL}/api${path}`, {
+    res = await fetch(`${import.meta.env.API_URL}/api${path}`, {
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
       ...init,

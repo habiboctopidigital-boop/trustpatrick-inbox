@@ -60,7 +60,7 @@ function issueSessionCookie(res) {
   const token = sign({ email: ACCOUNT.email, exp: Date.now() + SESSION_MS });
   res.cookie(COOKIE_NAME, token, {
     httpOnly: true,
-    sameSite: 'Lax',
+    sameSite: 'None',
     secure: process.env.NODE_ENV === 'production',
     maxAge: SESSION_MS,
     path: '/',
